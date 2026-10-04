@@ -1,7 +1,7 @@
 <?php
 // Admin panel (served under the configurable admin path).
 
-const RESERVED_PATHS = ['feed', 'search', 'category', 'themes', 'plugins', 'core', 'data', 'index', 'install', 'assets'];
+const RESERVED_PATHS = ['feed', 'search', 'category', 'themes', 'plugins', 'core', 'data', 'index', 'install', 'assets', 'admin'];
 
 function admin_layout(string $title, callable $body): void
 {
@@ -101,7 +101,10 @@ function admin_route(string $sub): void
         case 'posts': admin_list('post'); break;
         case 'pages': admin_list('page'); break;
         case 'edit': admin_edit((int)($parts[1] ?? 0), (string)($parts[2] ?? 'post')); break;
-        case 'delete': if ($post) { q('DELETE FROM posts WHERE id=?', [(int)($_POST['id'] ?? 0)]); flash('Deleted.'); } redirect(admin_url()); 
+        case 'delete':
+            if ($post) { q('DELETE FROM posts WHERE id=?', [(int)($_POST['id'] ?? 0)]); flash('Deleted.'); }
+            redirect(admin_url());
+            break;
         case 'themes': admin_themes($post); break;
         case 'plugins': admin_plugins($post); break;
         case 'import-export': admin_import_export($post); break;
@@ -256,10 +259,10 @@ function admin_settings(bool $post): void
     if ($post) {
         $act = $_POST['action'] ?? '';
         if ($act === 'general') {
-            set_setting('site_title', mb_substr(trim((string)$_POST['site_title']), 0, 120) ?: 'My Blog');
-            set_setting('tagline', mb_substr(trim((string)$_POST['tagline']), 0, 200));
-            set_setting('posts_per_page', (string)max(1, min(50, (int)$_POST['posts_per_page'])));
-            $ap = strtolower(trim((string)$_POST['admin_path']));
+            set_setting('site_title', mb_substr(trim((string)($_POST['site_title'] ?? '')), 0, 120) ?: 'My Blog');
+            set_setting('tagline', mb_substr(trim((string)($_POST['tagline'] ?? '')), 0, 200));
+            set_setting('posts_per_page', (string)max(1, min(50, (int)($_POST['posts_per_page'] ?? 10))));
+            $ap = strtolower(trim((string)($_POST['admin_path'] ?? '')));
             if ($ap !== setting('admin_path')) {
                 if (!valid_admin_path($ap)) { flash('Invalid admin URL (3-40 chars, a-z 0-9 -, not reserved or used by a post).', 'err'); redirect(admin_url('settings')); }
                 set_setting('admin_path', $ap);

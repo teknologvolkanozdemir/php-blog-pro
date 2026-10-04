@@ -44,13 +44,13 @@ function import_xml(string $xml): array
     libxml_use_internal_errors($prev);
     if (!$ok || !$d->documentElement || $d->documentElement->nodeName !== 'blog') throw new RuntimeException('Not a valid blog export file.');
     $x = new DOMXPath($d);
-    foreach ($x->query('/blog/settings/setting') as $n) {
-        $k = $n->getAttribute('name');
-        if (in_array($k, EXPORT_SETTINGS, true)) set_setting($k, mb_substr(trim($n->textContent), 0, 255));
-    }
     $created = $updated = 0;
     db()->beginTransaction();
     try {
+        foreach ($x->query('/blog/settings/setting') as $n) {
+            $k = $n->getAttribute('name');
+            if (in_array($k, EXPORT_SETTINGS, true)) set_setting($k, $k === 'posts_per_page' ? (string)max(1, min(50, (int)$n->textContent)) : mb_substr(trim($n->textContent), 0, 255));
+        }
         foreach ($x->query('/blog/posts/post') as $n) {
             $f = [];
             foreach (['type', 'title', 'slug', 'excerpt', 'content', 'category', 'status', 'created_at'] as $k) {

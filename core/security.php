@@ -119,7 +119,7 @@ function sanitize_html(string $html): string
                     $val = $a->value;
                     $bad = !in_array($name, $attrs, true);
                     if (!$bad && in_array($name, ['href','src'], true)) {
-                        $clean = preg_replace('/[\x00-\x20]+/', '', html_entity_decode($val));
+                        $clean = preg_replace('/[\x00-\x20]+/', '', html_entity_decode($val, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
                         $bad = !preg_match('#^(https?:|mailto:|/|\#|[^:]*$)#i', $clean);
                     }
                     if ($bad) $c->removeAttribute($a->name);

@@ -116,7 +116,29 @@ function install_package(string $kind, string $zipPath): string
     if ($zip->locateName("$slug/$mainFile") === false) throw new RuntimeException("Missing $slug/$mainFile.");
     $dest = ROOT . "/$kind/$slug";
     if (file_exists($dest)) throw new RuntimeException('Already installed.');
-    if (!$zip->extractTo(ROOT . "/$kind")) throw new RuntimeException('Extraction failed.');
-    $zip->close();
+    try {
+        $total = 0;
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $n = str_replace('\\', '/', $zip->getNameIndex($i));
+            $t = ROOT . "/$kind/" . $n;
+            if (substr($n, -1) === '/') { if (!is_dir($t)) mkdir($t, 0755, true); continue; }
+            if (!is_dir(dirname($t))) mkdir(dirname($t), 0755, true);
+            $in = $zip->getStream($n);
+            $out = fopen($t, 'wb');
+            if (!$in || !$out) throw new RuntimeException('Extraction failed.');
+            while (!feof($in)) {
+                $chunk = fread($in, 8192);
+                $total += strlen($chunk);
+                if ($total > 20 * 1024 * 1024) throw new RuntimeException('Archive too large.');
+                fwrite($out, $chunk);
+            }
+            fclose($in); fclose($out);
+        }
+    } catch (Throwable $e) {
+        if (is_dir($dest)) rrmdir($dest);
+        throw $e instanceof RuntimeException ? $e : new RuntimeException('Extraction failed.');
+    } finally {
+        $zip->close();
+    }
     return $slug;
 }
