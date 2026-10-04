@@ -1,0 +1,9 @@
+Options -Indexes
+RewriteEngine On
+RewriteRule ^(core|data|admin)(/|$) - [F,L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]
+<FilesMatch "\.(sqlite|json|log)$">
+Require all denied
+</FilesMatch>
